@@ -1,0 +1,65 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "http://localhost:8000",
+  "dependencies": {
+    "@babel/plugin-transform-class-properties": "^7.27.1",
+    "@babel/plugin-transform-nullish-coalescing-operator": "^7.27.1",
+    "@babel/plugin-transform-numeric-separator": "^7.27.1",
+    "@babel/plugin-transform-optional-chaining": "^7.27.1",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@babel/plugin-transform-private-property-in-object": "^7.27.1",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@eslint/config-array": "^0.21.0",
+    "@eslint/object-schema": "^2.1.6",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
+    "@mui/icons-material": "^5.14.19",
+    "@mui/material": "^5.14.20",
+    "@rollup/plugin-terser": "^0.4.4",
+    "abab": "^2.0.6",
+    "axios": "^1.6.2",
+    "domexception": "^4.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
+    "glob": "^11.0.3",
+    "inflight": "^1.0.6",
+    "lru-cache": "^11.1.0",
+    "q": "^1.5.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.1.0",
+    "react-router-dom": "^6.20.1",
+    "react-scripts": "^5.0.1",
+    "rimraf": "^6.0.1",
+    "svgo": "^4.0.0",
+    "w3c-hr-time": "^1.0.2",
+    "workbox-background-sync": "^7.3.0",
+    "workbox-google-analytics": "^7.3.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
