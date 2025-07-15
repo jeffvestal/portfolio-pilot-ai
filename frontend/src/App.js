@@ -8,6 +8,9 @@ import Header from './components/Header';
 import Overview from './pages/Overview';
 import ProactiveAlerts from './pages/ProactiveAlerts';
 import AccountDrilldown from './pages/AccountDrilldown';
+import AccountsList from './pages/AccountsList';
+import NewsList from './pages/NewsList';
+import ReportsList from './pages/ReportsList';
 import Chat from './pages/Chat';
 import Settings from './pages/Settings';
 
@@ -116,6 +119,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Overview />} />
               <Route path="/alerts" element={<ProactiveAlerts />} />
+              <Route path="/accounts" element={<AccountsList />} />
+              <Route path="/news" element={<NewsList />} />
+              <Route path="/reports" element={<ReportsList />} />
               <Route path="/account/:accountId" element={<AccountDrilldown />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>

@@ -197,6 +197,68 @@ class ESDataClient:
             logger.error(f"Error fetching report {report_id}: {e}")
             return None
     
+    async def get_all_news(self) -> List[Dict[str, Any]]:
+        """Get all news articles for the news list page"""
+        try:
+            response = await self.client.search(
+                index="financial_news",
+                body={
+                    "query": {"match_all": {}}, 
+                    "size": 1000,
+                    "sort": [{"published_date": {"order": "desc"}}]
+                }
+            )
+            
+            return [
+                {
+                    "id": hit["_id"],
+                    "title": hit["_source"].get("title", "No title"),
+                    "symbol": hit["_source"].get("symbol", ""),
+                    "published_date": hit["_source"].get("published_date", ""),
+                    "summary": hit["_source"].get("summary", "")[:200] + "..." if hit["_source"].get("summary", "") else "No summary available",
+                    "source": hit["_source"].get("source", ""),
+                    "url": hit["_source"].get("url", ""),
+                    "document_id": hit["_id"],
+                    "index": "financial_news"
+                }
+                for hit in response["hits"]["hits"]
+            ]
+            
+        except Exception as e:
+            logger.error(f"Error fetching all news: {e}")
+            return []
+    
+    async def get_all_reports(self) -> List[Dict[str, Any]]:
+        """Get all reports for the reports list page"""
+        try:
+            response = await self.client.search(
+                index="financial_reports",
+                body={
+                    "query": {"match_all": {}}, 
+                    "size": 1000,
+                    "sort": [{"published_date": {"order": "desc"}}]
+                }
+            )
+            
+            return [
+                {
+                    "id": hit["_id"],
+                    "title": hit["_source"].get("title", "No title"),
+                    "symbol": hit["_source"].get("symbol", ""),
+                    "published_date": hit["_source"].get("published_date", ""),
+                    "summary": hit["_source"].get("summary", "")[:200] + "..." if hit["_source"].get("summary", "") else "No summary available",
+                    "source": hit["_source"].get("source", ""),
+                    "url": hit["_source"].get("url", ""),
+                    "document_id": hit["_id"],
+                    "index": "financial_reports"
+                }
+                for hit in response["hits"]["hits"]
+            ]
+            
+        except Exception as e:
+            logger.error(f"Error fetching all reports: {e}")
+            return []
+    
     async def close(self):
         """Close the ES client connection"""
         if self.client:

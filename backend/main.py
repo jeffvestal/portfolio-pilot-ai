@@ -332,6 +332,36 @@ async def get_full_article(document_id: str, index: str = "financial_news"):
         logger.error(f"Error fetching full article {document_id}: {e}")
         raise HTTPException(status_code=500, detail="Error fetching article")
 
+@app.get("/accounts")
+async def get_all_accounts():
+    """Get all accounts for the accounts list page"""
+    try:
+        accounts = await es_data_client.get_all_accounts()
+        return {"accounts": accounts}
+    except Exception as e:
+        logger.error(f"Error fetching all accounts: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching accounts")
+
+@app.get("/news")
+async def get_all_news():
+    """Get all news articles for the news list page"""
+    try:
+        news = await es_data_client.get_all_news()
+        return {"news": news}
+    except Exception as e:
+        logger.error(f"Error fetching all news: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching news")
+
+@app.get("/reports")
+async def get_all_reports():
+    """Get all reports for the reports list page"""
+    try:
+        reports = await es_data_client.get_all_reports()
+        return {"reports": reports}
+    except Exception as e:
+        logger.error(f"Error fetching all reports: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching reports")
+
 async def chat_stream_generator(prompt: str, session_id: Optional[str] = None):
     """
     Multi-turn conversation generator with hybrid conversation persistence.

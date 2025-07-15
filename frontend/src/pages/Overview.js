@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Card, CardContent, Grid, Typography, CircularProgress, Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ExpandableNewsSummary from '../components/ExpandableNewsSummary';
 import ExpandableReportSummary from '../components/ExpandableReportSummary';
@@ -7,6 +8,7 @@ import FullArticleDialog from '../components/FullArticleDialog';
 import FullReportDialog from '../components/FullReportDialog';
 
 const Overview = () => {
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -74,7 +76,10 @@ const Overview = () => {
       {metrics && (
         <>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card 
+              sx={{ cursor: 'pointer' }}
+              onClick={() => navigate('/accounts')}
+            >
               <CardContent>
                 <Typography variant="h5">{metrics.total_accounts}</Typography>
                 <Typography color="textSecondary">Total Accounts</Typography>
@@ -90,7 +95,10 @@ const Overview = () => {
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card 
+              sx={{ cursor: 'pointer' }}
+              onClick={() => navigate('/news')}
+            >
               <CardContent>
                 <Typography variant="h5">{metrics.total_news}</Typography>
                 <Typography color="textSecondary">Total News</Typography>
@@ -98,7 +106,10 @@ const Overview = () => {
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
+            <Card 
+              sx={{ cursor: 'pointer' }}
+              onClick={() => navigate('/reports')}
+            >
               <CardContent>
                 <Typography variant="h5">{metrics.total_reports}</Typography>
                 <Typography color="textSecondary">Total Reports</Typography>
