@@ -14,7 +14,7 @@ const Header = ({ toggleChat, toggleColorMode, currentMode }) => {
         </Typography>
         <Box>
           <Button color="inherit" component={Link} to="/">Overview</Button>
-          <Button color="inherit" component={Link} to="/alerts">Proactive Alerts</Button>
+          <Button color="inherit" component={Link} to="/alerts">Negative News</Button>
           <Button color="inherit" onClick={toggleChat}>Chat</Button>
           <IconButton sx={{ ml: 1 }} onClick={toggleColorMode} color="inherit">
             {currentMode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}

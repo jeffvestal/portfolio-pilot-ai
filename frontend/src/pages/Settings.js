@@ -11,9 +11,11 @@ import {
     ListItemText, 
     IconButton,
     Stack,
-    FormControlLabel 
+    FormControlLabel,
+    CircularProgress
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const Settings = () => {
     const [settings, setSettings] = useState(null);
@@ -22,6 +24,7 @@ const Settings = () => {
     const [newServerName, setNewServerName] = useState('');
     const [newServerUseForMainPage, setNewServerUseForMainPage] = useState(false);
     const [loggingEnabled, setLoggingEnabled] = useState(false);
+    const [refreshingServers, setRefreshingServers] = useState(new Set());
 
     useEffect(() => {
         // Fetch server settings
@@ -139,6 +142,41 @@ const Settings = () => {
         });
     };
 
+    const handleRefreshTools = async (serverId) => {
+        // Add server to refreshing set
+        setRefreshingServers(prev => new Set([...prev, serverId]));
+        
+        try {
+            const response = await fetch(`/servers/${serverId}/refresh-tools`, {
+                method: 'POST',
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to refresh tools');
+            }
+            
+            const updatedServer = await response.json();
+            
+            // Update the settings with the refreshed server data
+            setSettings(prev => ({
+                ...prev,
+                [serverId]: updatedServer
+            }));
+            
+        } catch (error) {
+            console.error('Failed to refresh tools:', error);
+            alert(`Error refreshing tools: ${error.message}`);
+        } finally {
+            // Remove server from refreshing set
+            setRefreshingServers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(serverId);
+                return newSet;
+            });
+        }
+    };
+
     if (!settings) {
         return <Typography>Loading...</Typography>;
     }
@@ -207,6 +245,18 @@ const Settings = () => {
                         <Typography variant="h5">{server.name}</Typography>
                         <Box>
                             <Switch checked={server.enabled} onChange={() => handleToggle(serverId)} />
+                            <IconButton 
+                                onClick={() => handleRefreshTools(serverId)} 
+                                color="primary"
+                                disabled={refreshingServers.has(serverId)}
+                                title="Refresh Tools"
+                            >
+                                {refreshingServers.has(serverId) ? (
+                                    <CircularProgress size={20} />
+                                ) : (
+                                    <RefreshIcon />
+                                )}
+                            </IconButton>
                             {serverId !== 'local' && (
                                 <IconButton onClick={() => handleRemoveServer(serverId)} color="error">
                                     <DeleteIcon />

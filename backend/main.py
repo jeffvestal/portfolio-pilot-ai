@@ -17,6 +17,8 @@ from mcp_config import config_manager
 from conversation_manager import conversation_manager
 from es_data_client import es_data_client
 from main_page_data_service import main_page_data_service
+from negative_news_alerts_service import negative_news_alerts_service
+from account_news_reports_service import account_news_reports_service
 
 # Simple logging status management
 LOG_MCP_COMMUNICATIONS = os.getenv("LOG_MCP_COMMUNICATIONS", "false").lower() == "true"
@@ -185,6 +187,18 @@ async def get_account_details(account_id: str):
     except Exception as e:
         logger.error(f"Error fetching account {account_id}: {e}")
         raise HTTPException(status_code=500, detail="Error fetching account data")
+
+@app.get("/account/{account_id}/news-reports")
+async def get_account_news_reports(account_id: str, time_period: int = 72, time_unit: str = "hours"):
+    """Get news and reports for all symbols in an account's holdings"""
+    try:
+        news_reports_data = await account_news_reports_service.get_account_news_reports(
+            account_id, time_period, time_unit
+        )
+        return news_reports_data
+    except Exception as e:
+        logger.error(f"Error fetching news/reports for account {account_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching news/reports data")
 
 @app.post("/agent/start_day")
 async def start_day():
@@ -361,6 +375,105 @@ async def get_all_reports():
     except Exception as e:
         logger.error(f"Error fetching all reports: {e}")
         raise HTTPException(status_code=500, detail="Error fetching reports")
+
+@app.get("/alerts/negative-news")
+async def get_negative_news_alerts(time_period: int = 48, time_unit: str = "hours"):
+    """Get negative news alerts for accounts with positions in negative sentiment news/reports"""
+    try:
+        # Validate time_unit
+        valid_units = ["minutes", "hours", "days"]
+        if time_unit not in valid_units:
+            raise HTTPException(status_code=400, detail=f"Invalid time_unit. Must be one of: {valid_units}")
+        
+        # Validate time_period
+        if time_period <= 0:
+            raise HTTPException(status_code=400, detail="time_period must be greater than 0")
+        
+        logger.info(f"Getting negative news alerts for {time_period} {time_unit}")
+        alerts = await negative_news_alerts_service.get_negative_news_alerts(time_period, time_unit)
+        return alerts
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching negative news alerts: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching negative news alerts")
+
+async def article_summarization_generator(article_content: str, symbol: str = "", account_id: str = ""):
+    """
+    Generate a streaming summary of an article with focus on account/symbol relevance.
+    """
+    try:
+        # Build context-aware prompt
+        context_parts = []
+        
+        # Add account context if provided
+        if account_id:
+            try:
+                account_data = await es_data_client.get_account_details(account_id)
+                if account_data and "holdings" in account_data:
+                    # Find relevant holding for the symbol
+                    relevant_holding = None
+                    for holding in account_data["holdings"]:
+                        if holding.get("symbol") == symbol:
+                            relevant_holding = holding
+                            break
+                    
+                    if relevant_holding:
+                        context_parts.append(f"Account Context: The account {account_data.get('account_name', account_id)} holds {relevant_holding.get('total_quantity', 0)} shares of {symbol} ({relevant_holding.get('company_name', '')}) worth ${relevant_holding.get('total_current_value', 0):,.2f} in the {relevant_holding.get('sector', 'unknown')} sector.")
+                    else:
+                        context_parts.append(f"Account Context: Analyzing potential impact on account {account_data.get('account_name', account_id)} portfolio.")
+            except Exception as e:
+                logger.warning(f"Could not fetch account context for {account_id}: {e}")
+        
+        # Build the summarization prompt
+        system_prompt = """You are a professional financial analyst providing concise, actionable summaries of news articles. 
+
+Focus on:
+1. Key financial implications and market impact
+2. Specific effects on the mentioned company/symbol
+3. Potential portfolio implications for investors
+4. Risk factors and opportunities
+5. Timeline and likelihood of impacts
+
+Provide a clear, structured summary in 3-4 paragraphs that a financial advisor could use when speaking with clients."""
+        
+        context_text = "\n".join(context_parts) if context_parts else ""
+        
+        user_prompt = f"""Please summarize this financial article with focus on implications for {symbol if symbol else 'relevant investments'}:
+
+{context_text}
+
+Article Content:
+{article_content}
+
+Provide a professional summary focusing on financial relevance, market implications, and potential impact on investors holding {symbol if symbol else 'related positions'}."""
+
+        # Create message for single-turn summarization
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        # Use existing EIS client for LLM interaction
+        async for data in get_chat_response_stream_with_messages(messages):
+            if data.get("error"):
+                yield f"Error: {data['error']}"
+                return
+
+            # Safe access to choices array
+            choices = data.get("choices", [])
+            if not choices:
+                continue
+                
+            delta = choices[0].get("delta", {})
+            content = delta.get("content")
+            
+            if content:
+                yield content
+            
+    except Exception as e:
+        logger.error(f"Error in article summarization: {e}")
+        yield f"Error generating summary: {str(e)}"
 
 async def chat_stream_generator(prompt: str, session_id: Optional[str] = None):
     """
@@ -544,6 +657,21 @@ async def chat_query(query: Dict[str, str]):
     session_id = query.get("session_id")  # Optional session ID for conversation persistence
     return StreamingResponse(chat_stream_generator(prompt, session_id), media_type="text/plain")
 
+@app.post("/article/summarize")
+async def summarize_article(request: Dict[str, str]):
+    """Summarize an article with focus on account/symbol relevance"""
+    article_content = request.get("article_content", "")
+    symbol = request.get("symbol", "")
+    account_id = request.get("account_id", "")
+    
+    if not article_content:
+        raise HTTPException(status_code=400, detail="Article content is required")
+    
+    return StreamingResponse(
+        article_summarization_generator(article_content, symbol, account_id), 
+        media_type="text/plain"
+    )
+
 # --- Settings Endpoints ---
 
 @app.get("/settings")
@@ -643,6 +771,41 @@ async def unregister_external_server(server_id: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error removing server: {e}")
+
+@app.post("/servers/{server_id}/refresh-tools")
+async def refresh_server_tools(server_id: str):
+    """Refresh/rediscover tools for an existing MCP server"""
+    try:
+        # Get the current server config
+        all_servers = config_manager.get_all_servers()
+        if server_id not in all_servers:
+            raise HTTPException(status_code=404, detail=f"Server {server_id} not found")
+        
+        server = all_servers[server_id]
+        logger.info(f"Refreshing tools for MCP server: {server_id} ({server.name})")
+        
+        # Remove and re-add the server to refresh tools
+        await mcp_manager.remove_server(server_id)
+        await mcp_manager.add_server(server)
+        
+        # Update the config with refreshed tools
+        config_manager.update_server(server)
+        
+        logger.info(f"Successfully refreshed tools for server: {server_id} - found {len(server.tools)} tools")
+        
+        # Return updated server config without API key
+        result = server.to_dict()
+        result.pop("api_key", None)
+        return result
+        
+    except HTTPException:
+        raise
+    except MCPConnectionError as e:
+        logger.error(f"Connection error refreshing tools for server {server_id}: {e}")
+        raise HTTPException(status_code=400, detail=f"Connection error: {e}")
+    except Exception as e:
+        logger.error(f"Error refreshing tools for server {server_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error refreshing server tools: {e}")
 
 @app.get("/tools")
 async def get_available_tools():

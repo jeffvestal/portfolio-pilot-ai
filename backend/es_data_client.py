@@ -259,6 +259,53 @@ class ESDataClient:
             logger.error(f"Error fetching all reports: {e}")
             return []
     
+    async def get_position_details(self, account_id: str, symbol: str) -> Optional[Dict[str, Any]]:
+        """Get detailed position information for a specific account and symbol"""
+        try:
+            response = await self.client.search(
+                index="financial_holdings",
+                body={
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {"term": {"account_id": account_id}},
+                                {"term": {"symbol": symbol}}
+                            ]
+                        }
+                    },
+                    "size": 1
+                }
+            )
+            
+            if not response["hits"]["hits"]:
+                return None
+                
+            holding = response["hits"]["hits"][0]["_source"]
+            quantity = holding.get("quantity", 0)
+            purchase_price = holding.get("purchase_price", 0)
+            current_price = holding.get("current_price", purchase_price)  # Fallback to purchase price if no current price
+            
+            total_cost = quantity * purchase_price
+            current_value = quantity * current_price
+            unrealized_pnl = current_value - total_cost
+            unrealized_pnl_pct = (unrealized_pnl / total_cost * 100) if total_cost > 0 else 0
+            
+            return {
+                "account_id": account_id,
+                "symbol": symbol,
+                "quantity": quantity,
+                "purchase_price": purchase_price,
+                "current_price": current_price,
+                "total_cost": total_cost,
+                "current_value": current_value,
+                "unrealized_pnl": unrealized_pnl,
+                "unrealized_pnl_pct": unrealized_pnl_pct
+            }
+            
+        except Exception as e:
+            logger.error(f"Error fetching position details for {account_id}/{symbol}: {e}")
+            return None
+    
     async def close(self):
         """Close the ES client connection"""
         if self.client:

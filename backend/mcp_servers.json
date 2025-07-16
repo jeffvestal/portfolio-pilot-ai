@@ -8,28 +8,9 @@
       "conversation_location": "response",
       "enabled": true,
       "id": "new-server-1752270833839",
-      "last_connected": 1752270833.9884942,
+      "last_connected": 1752627210.424545,
       "name": "ES MCP Server",
       "tools": {
-        "esql_symbol_news_and_reports": {
-          "description": "Find account_id.",
-          "enabled": true,
-          "name": "esql_symbol_news_and_reports",
-          "parameters": {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            "properties": {
-              "symbol": {
-                "description": "The asset symbol",
-                "type": "string"
-              }
-            },
-            "required": [
-              "symbol"
-            ],
-            "type": "object"
-          }
-        },
         "execute_esql": {
           "description": "Execute an ES|QL query and return the results.",
           "enabled": true,
@@ -166,6 +147,49 @@
             "type": "object"
           }
         },
+        "neg_news_reports_with_pos": {
+          "description": "Find accounts that have a position in a negative sentiment news or report in the specified timeframe.",
+          "enabled": true,
+          "name": "neg_news_reports_with_pos",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "time_duration": {
+                "description": "The timeframe to search back. Format is \"X hours|minutes|days\" eg. \"7 hours\" ",
+                "type": "string"
+              }
+            },
+            "required": [
+              "time_duration"
+            ],
+            "type": "object"
+          }
+        },
+        "news_and_report_lookup_with_symbol_detail": {
+          "description": "Find News and Reports about a specific Symbol. Includes detail about the Symbol.",
+          "enabled": true,
+          "name": "news_and_report_lookup_with_symbol_detail",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "symbol": {
+                "description": "The financial symbol to look up. eg \"ESTC\" ",
+                "type": "string"
+              },
+              "time_duration": {
+                "description": "The timeframe to search back. Format is \"X hours|minutes|days\" eg. \"7 hours\" ",
+                "type": "string"
+              }
+            },
+            "required": [
+              "time_duration",
+              "symbol"
+            ],
+            "type": "object"
+          }
+        },
         "nl_search": {
           "description": "Run a DSL search query on one index and return matching documents.",
           "enabled": true,
@@ -227,6 +251,25 @@
             ],
             "type": "object"
           }
+        },
+        "testtime": {
+          "description": "run when someone askes to test time or testtime",
+          "enabled": true,
+          "name": "testtime",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "timeframe": {
+                "description": "The timeframe to search back. Format is \"X hours|minutes|days\" eg \"12 hours\" ",
+                "type": "string"
+              }
+            },
+            "required": [
+              "timeframe"
+            ],
+            "type": "object"
+          }
         }
       },
       "transport": "http",
@@ -234,6 +277,6 @@
       "use_for_main_page": true
     }
   },
-  "updated_at": 1752270834.014357,
+  "updated_at": 1752627210.460994,
   "version": "1.0"
 }
