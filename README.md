@@ -13,6 +13,9 @@ Portfolio-Pilot-AI is an AI-powered financial analyst dashboard that demonstrate
 - **Interactive content** - "Show More/Less" expandable summaries and full content modals
 - **Start Day workflow** - Trigger daily analysis and load enhanced content
 - **Dedicated list pages** - Navigate to detailed accounts, news, and reports pages from overview metrics
+- **Action Item Analysis** - Intelligent monitoring of top accounts for negative news exposure
+- **MCP Tool Notifications** - Visual indicators showing when MCP tools are being executed
+- **Optimized search functionality** - Robust filtering across all content types with error handling
 
 ### 📊 Advanced Account Management
 - **Professional holdings display** - Clean card-based layout for portfolio positions
@@ -34,6 +37,9 @@ Portfolio-Pilot-AI is an AI-powered financial analyst dashboard that demonstrate
 - **MCP tool integration** - Dynamic tool discovery and execution via Elasticsearch's MCP server
 - **Real-time streaming** - Live responses with tool execution feedback
 - **Conversation persistence** - Hybrid approach supporting both server-native and client sessions
+- **Collapsible tool results** - Clean accordion-style display for MCP tool execution details
+- **Click-outside-to-close** - Intuitive interface behavior with state preservation
+- **Resizable chat panel** - Drag-to-resize for optimal screen usage
 
 ### 📰 Intelligent Content Analysis
 - **Symbol-specific lookup** - News and reports analysis using `news_and_report_lookup_with_symbol_detail` MCP tool
@@ -194,6 +200,7 @@ Frontend will be available at `http://localhost:3000`
 - `GET /accounts` - List all accounts
 - `GET /news` - List all news articles
 - `GET /reports` - List all reports
+- `GET /action-item` - Get action item analysis for top accounts with negative news exposure
 
 ### Negative News Alerts
 - `GET /alerts/negative-news?time_period=48&time_unit=hours` - Get negative news alerts

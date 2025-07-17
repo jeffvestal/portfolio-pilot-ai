@@ -3,8 +3,11 @@ import { TextField, Button, Box, Paper, Typography, Drawer, IconButton, Circular
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import ReactMarkdown from 'react-markdown';
+import { useMCPNotification } from '../contexts/MCPNotificationContext';
+import ChatMessageRenderer from '../components/ChatMessageRenderer';
 
 const Chat = ({ open, toggleChat }) => {
+  const { showMCPTool, hideMCPTool } = useMCPNotification();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +60,8 @@ const Chat = ({ open, toggleChat }) => {
   const handleSend = async () => {
     if (!input.trim()) return;
 
+    const notificationId = showMCPTool('Chat with MCP Tools', 'Processing query with available Elasticsearch tools');
+
     const userMessage = { sender: 'user', text: input, timestamp: new Date().toLocaleTimeString() };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
@@ -87,9 +92,11 @@ const Chat = ({ open, toggleChat }) => {
 
       // Await the full text response. This is simpler and more robust.
       const fullText = await response.text();
+      console.log('🔍 Chat: Raw backend response:', fullText);
 
       // Extract session ID and clean display text
       const cleanedText = extractSessionId(fullText);
+      console.log('🔍 Chat: Cleaned text for display:', cleanedText);
 
       // Update the last message with the cleaned text.
       setMessages(prev => {
@@ -112,6 +119,7 @@ const Chat = ({ open, toggleChat }) => {
       });
     } finally {
       setIsLoading(false);
+      hideMCPTool(notificationId);
     }
   };
 
@@ -150,7 +158,7 @@ const Chat = ({ open, toggleChat }) => {
     <Drawer
       anchor="right"
       open={open}
-      hideBackdrop={true}
+      onClose={toggleChat}
       disableEscapeKeyDown={true}
       PaperProps={{
         sx: {
@@ -213,11 +221,16 @@ const Chat = ({ open, toggleChat }) => {
                   display: 'inline-block',
                   p: 1,
                   bgcolor: message.sender === 'user' ? 'primary.dark' : 'background.paper',
+                  color: message.sender === 'user' ? 'white' : 'inherit',
                   borderRadius: '10px',
                   boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.2)',
                 }}
               >
-                <ReactMarkdown>{message.text}</ReactMarkdown>
+                {message.sender === 'user' ? (
+                  <ReactMarkdown>{message.text}</ReactMarkdown>
+                ) : (
+                  <ChatMessageRenderer message={message.text} />
+                )}
               </Paper>
             </Box>
           ))}

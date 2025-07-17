@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Box } from '@mui/material';
 
 import Header from './components/Header';
+import MCPToolNotification from './components/MCPToolNotification';
 import Overview from './pages/Overview';
 import ProactiveAlerts from './pages/ProactiveAlerts';
 import AccountDrilldown from './pages/AccountDrilldown';
@@ -13,6 +14,7 @@ import NewsList from './pages/NewsList';
 import ReportsList from './pages/ReportsList';
 import Chat from './pages/Chat';
 import Settings from './pages/Settings';
+import { MCPNotificationProvider } from './contexts/MCPNotificationContext';
 
 const getDesignTokens = (mode) => ({
   palette: {
@@ -110,26 +112,29 @@ function App() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-          <Header toggleChat={toggleChat} toggleColorMode={colorMode.toggleColorMode} currentMode={mode} />
-          <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-            <Routes>
-              <Route path="/" element={<Overview />} />
-              <Route path="/alerts" element={<ProactiveAlerts />} />
-              <Route path="/accounts" element={<AccountsList />} />
-              <Route path="/news" element={<NewsList />} />
-              <Route path="/reports" element={<ReportsList />} />
-              <Route path="/account/:accountId" element={<AccountDrilldown />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
+    <MCPNotificationProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+            <Header toggleChat={toggleChat} toggleColorMode={colorMode.toggleColorMode} currentMode={mode} />
+            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+              <Routes>
+                <Route path="/" element={<Overview />} />
+                <Route path="/alerts" element={<ProactiveAlerts />} />
+                <Route path="/accounts" element={<AccountsList />} />
+                <Route path="/news" element={<NewsList />} />
+                <Route path="/reports" element={<ReportsList />} />
+                <Route path="/account/:accountId" element={<AccountDrilldown />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
+            </Box>
+            <Chat open={chatOpen} toggleChat={toggleChat} />
           </Box>
-          <Chat open={chatOpen} toggleChat={toggleChat} />
-        </Box>
-      </Router>
-    </ThemeProvider>
+          <MCPToolNotification />
+        </Router>
+      </ThemeProvider>
+    </MCPNotificationProvider>
   );
 }
 

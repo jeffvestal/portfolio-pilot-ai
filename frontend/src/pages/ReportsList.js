@@ -32,12 +32,20 @@ const ReportsList = () => {
   }, []);
 
   const fetchReports = async () => {
+    console.log('🔍 ReportsList: Starting to fetch reports...');
     try {
       const response = await axios.get('http://localhost:8000/reports');
+      console.log('🔍 ReportsList: Raw response:', response);
+      console.log('🔍 ReportsList: Response status:', response.status);
+      console.log('🔍 ReportsList: Response data:', response.data);
+      console.log('🔍 ReportsList: Reports array:', response.data.reports);
+      console.log('🔍 ReportsList: Number of reports:', response.data.reports?.length);
       setReports(response.data.reports);
     } catch (err) {
-      console.error('Error fetching reports:', err);
-      setError('Failed to load financial reports');
+      console.error('❌ ReportsList: Error fetching reports:', err);
+      console.error('❌ ReportsList: Error response:', err.response?.data);
+      console.error('❌ ReportsList: Error status:', err.response?.status);
+      setError(`Failed to load financial reports: ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -68,10 +76,10 @@ const ReportsList = () => {
 
   const filteredReports = React.useMemo(() => {
     return reports.filter(report =>
-      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.source.toLowerCase().includes(searchTerm.toLowerCase())
+      (report.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (report.symbol || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (report.summary || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (report.source || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [reports, searchTerm]);
 
@@ -97,9 +105,26 @@ const ReportsList = () => {
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error}
-      </Alert>
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+          {process.env.NODE_ENV === 'development' && (
+            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+              Check browser console for detailed error information
+            </Typography>
+          )}
+        </Alert>
+        <Button 
+          variant="outlined" 
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            fetchReports();
+          }}
+        >
+          Try Again
+        </Button>
+      </Box>
     );
   }
 

@@ -21,11 +21,13 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TimePeriodSelector from '../components/TimePeriodSelector';
+import { useMCPNotification } from '../contexts/MCPNotificationContext';
 import axios from 'axios';
 
 const ProactiveAlerts = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showMCPTool, hideMCPTool } = useMCPNotification();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,6 +59,8 @@ const ProactiveAlerts = () => {
   // Remove automatic refresh on time period changes - now manual only
 
   const fetchAlerts = async () => {
+    const notificationId = showMCPTool('neg_news_reports_with_pos', 'Finding negative news affecting portfolio positions');
+    
     setLoading(true);
     setError(null);
     try {
@@ -72,6 +76,7 @@ const ProactiveAlerts = () => {
       setError('Failed to load negative news alerts');
     } finally {
       setLoading(false);
+      hideMCPTool(notificationId);
     }
   };
 

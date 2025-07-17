@@ -4,6 +4,7 @@ import { Button, Card, CardContent, Grid, Typography, Modal, Box, TextField, Lis
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { useMCPNotification } from '../contexts/MCPNotificationContext';
 import axios from 'axios';
 
 const modalStyle = {
@@ -24,6 +25,7 @@ const AccountDrilldown = () => {
   const { accountId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showMCPTool, hideMCPTool } = useMCPNotification();
   const [account, setAccount] = useState(null);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [email, setEmail] = useState({ subject: '', body: '' });
@@ -46,6 +48,8 @@ const AccountDrilldown = () => {
 
   useEffect(() => {
     const fetchNewsReports = async () => {
+      const notificationId = showMCPTool('news_and_report_lookup_with_symbol_detail', 'Analyzing news and reports for account symbols');
+
       setNewsReportsLoading(true);
       setNewsReportsError(null);
       try {
@@ -56,18 +60,19 @@ const AccountDrilldown = () => {
         setNewsReportsError('Failed to load news and reports');
       } finally {
         setNewsReportsLoading(false);
+        hideMCPTool(notificationId);
       }
     };
 
     if (accountId) {
       fetchNewsReports();
     }
-  }, [accountId]);
+  }, [accountId]); // Removed showMCPTool, hideMCPTool from dependencies as they're stable
 
   const handleEmailModalOpen = async (articleId) => {
-    const response = await axios.post('http://localhost:8000/email/draft', { 
+    const response = await axios.post('http://localhost:8000/email/draft', {
       account_id: accountId,
-      article_id: articleId 
+      article_id: articleId
     });
     setEmail(response.data);
     setEmailModalOpen(true);
@@ -97,14 +102,14 @@ const AccountDrilldown = () => {
     // Check if we came from alerts page and preserve state
     const fromAlerts = location.state?.fromAlerts;
     if (fromAlerts) {
-      navigate('/alerts', { 
-        state: { 
+      navigate('/alerts', {
+        state: {
           preserveState: true,
           alertsData: location.state.alertsData,
           timePeriod: location.state.timePeriod,
           timeUnit: location.state.timeUnit,
           expandedAlerts: location.state.expandedAlerts
-        } 
+        }
       });
     } else {
       // Fallback to normal navigation
@@ -148,7 +153,7 @@ const AccountDrilldown = () => {
     if (!sentiment) return 'Unknown';
     const sent = sentiment.toLowerCase();
     if (sent.includes('positive')) return 'Positive';
-    if (sent.includes('negative')) return 'Negative'; 
+    if (sent.includes('negative')) return 'Negative';
     if (sent.includes('neutral')) return 'Neutral';
     return sentiment;
   };
@@ -158,6 +163,8 @@ const AccountDrilldown = () => {
       // If summary already exists, don't regenerate
       return;
     }
+
+    const notificationId = showMCPTool('Chat Completion LLM', `Generating personalized summary for ${article.symbol || 'article'}`);
 
     // Add to summarizing set
     setSummarizingArticles(prev => new Set(prev).add(articleIndex));
@@ -185,10 +192,10 @@ const AccountDrilldown = () => {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         const chunk = new TextDecoder().decode(value);
         summary += chunk;
-        
+
         // Update summary in real-time as it streams
         setSummaries(prev => new Map(prev).set(articleIndex, summary));
       }
@@ -203,6 +210,7 @@ const AccountDrilldown = () => {
         newSet.delete(articleIndex);
         return newSet;
       });
+      hideMCPTool(notificationId);
     }
   };
 
@@ -232,11 +240,11 @@ const AccountDrilldown = () => {
           <CardContent>
             <Typography variant="h6" gutterBottom>Holdings</Typography>
             {account.holdings.map((holding, index) => (
-              <Box 
-                key={index} 
-                sx={{ 
-                  mb: 2, 
-                  p: 2, 
+              <Box
+                key={index}
+                sx={{
+                  mb: 2,
+                  p: 2,
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 1,
@@ -246,7 +254,7 @@ const AccountDrilldown = () => {
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   {holding.symbol} - {holding.company_name}
                 </Typography>
-                
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <Typography variant="caption" color="textSecondary">
@@ -256,7 +264,7 @@ const AccountDrilldown = () => {
                       {holding.total_quantity?.toLocaleString()}
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={12} sm={4}>
                     <Typography variant="caption" color="textSecondary">
                       Total Value
@@ -265,7 +273,7 @@ const AccountDrilldown = () => {
                       ${holding.total_current_value?.toLocaleString()}
                     </Typography>
                   </Grid>
-                  
+
                   <Grid item xs={12} sm={4}>
                     <Typography variant="caption" color="textSecondary">
                       Sector
@@ -284,7 +292,7 @@ const AccountDrilldown = () => {
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>Relevant News & Reports</Typography>
-            
+
             {newsReportsLoading && (
               <Box display="flex" justifyContent="center" alignItems="center" py={4}>
                 <CircularProgress size={40} />
@@ -293,13 +301,13 @@ const AccountDrilldown = () => {
                 </Typography>
               </Box>
             )}
-            
+
             {newsReportsError && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {newsReportsError}
               </Alert>
             )}
-            
+
             {newsReports && newsReports.status === 'no_servers' && (
               <Alert severity="warning" sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
@@ -310,7 +318,7 @@ const AccountDrilldown = () => {
                 </Typography>
               </Alert>
             )}
-            
+
             {newsReports && newsReports.status === 'tool_not_available' && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
@@ -321,7 +329,7 @@ const AccountDrilldown = () => {
                 </Typography>
               </Alert>
             )}
-            
+
             {newsReports && newsReports.status === 'no_data' && (
               <Alert severity="info" sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
@@ -332,7 +340,7 @@ const AccountDrilldown = () => {
                 </Typography>
               </Alert>
             )}
-            
+
             {newsReports && newsReports.status === 'success' && (
               <>
                 <Box mb={2}>
@@ -340,17 +348,17 @@ const AccountDrilldown = () => {
                     Found {newsReports.articles?.length || 0} articles for symbols: {newsReports.symbols_searched?.join(', ')}
                   </Typography>
                 </Box>
-                
+
                 {newsReports.articles?.map((article, index) => (
                   <Box key={index} sx={{ mb: 2 }}>
-                    <Card 
-                      variant="outlined" 
-                      sx={{ 
+                    <Card
+                      variant="outlined"
+                      sx={{
                         cursor: 'pointer',
                         '&:hover': { backgroundColor: 'action.hover' }
                       }}
                     >
-                      <CardContent 
+                      <CardContent
                         onClick={() => handleToggleArticle(index)}
                         sx={{ pb: expandedArticles.has(index) ? 1 : 2 }}
                       >
@@ -362,9 +370,9 @@ const AccountDrilldown = () => {
                             <Box display="flex" gap={1} mb={1} flexWrap="wrap">
                               <Chip label={article.symbol} size="small" color="primary" />
                               <Chip label={article.type} size="small" variant="outlined" />
-                              <Chip 
-                                label={getSentimentLabel(article.sentiment)} 
-                                size="small" 
+                              <Chip
+                                label={getSentimentLabel(article.sentiment)}
+                                size="small"
                                 color={getSentimentColor(article.sentiment)}
                                 variant="filled"
                               />
@@ -382,13 +390,13 @@ const AccountDrilldown = () => {
                             {expandedArticles.has(index) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                           </Box>
                         </Box>
-                        
+
                         <Collapse in={expandedArticles.has(index)}>
                           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, mb: 2 }}>
                               {article.content || article.summary || 'No content available'}
                             </Typography>
-                            
+
                             {/* Summarize Button */}
                             <Box sx={{ mb: 2 }}>
                               <Button
@@ -411,16 +419,16 @@ const AccountDrilldown = () => {
                                 )}
                               </Button>
                             </Box>
-                            
+
                             {/* Summary Display */}
                             {summaries.has(index) && (
-                              <Box sx={{ 
-                                mt: 2, 
-                                p: 2, 
-                                backgroundColor: 'background.default', 
-                                borderRadius: 1, 
-                                border: '1px solid', 
-                                borderColor: 'divider' 
+                              <Box sx={{
+                                mt: 2,
+                                p: 2,
+                                backgroundColor: 'background.default',
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'divider'
                               }}>
                                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary">
                                   AI Summary - Portfolio Impact Analysis
@@ -430,7 +438,7 @@ const AccountDrilldown = () => {
                                 </Typography>
                               </Box>
                             )}
-                            
+
                             {article.source && (
                               <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
                                 Source: {article.source}

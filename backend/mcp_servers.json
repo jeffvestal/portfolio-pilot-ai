@@ -1,14 +1,14 @@
 {
   "created_at": 1752091905.988878,
   "servers": {
-    "new-server-1752270833839": {
+    "new-server-1752697056517": {
       "api_key": "VjJDYTVaY0JxOVM3M2tfUkxrV2w6azExUG1SZXZ4WTkxd25hY1JaUExCZw==",
       "connection_status": "disconnected",
       "conversation_field": null,
       "conversation_location": "response",
       "enabled": true,
-      "id": "new-server-1752270833839",
-      "last_connected": 1752627210.424545,
+      "id": "new-server-1752697056517",
+      "last_connected": 1752697056.644568,
       "name": "ES MCP Server",
       "tools": {
         "execute_esql": {
@@ -251,25 +251,6 @@
             ],
             "type": "object"
           }
-        },
-        "testtime": {
-          "description": "run when someone askes to test time or testtime",
-          "enabled": true,
-          "name": "testtime",
-          "parameters": {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            "properties": {
-              "timeframe": {
-                "description": "The timeframe to search back. Format is \"X hours|minutes|days\" eg \"12 hours\" ",
-                "type": "string"
-              }
-            },
-            "required": [
-              "timeframe"
-            ],
-            "type": "object"
-          }
         }
       },
       "transport": "http",
@@ -277,6 +258,6 @@
       "use_for_main_page": true
     }
   },
-  "updated_at": 1752627210.460994,
+  "updated_at": 1752697056.667584,
   "version": "1.0"
 }

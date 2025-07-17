@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import asyncio
+import time
 from typing import List, Dict, Any, Optional
 import httpx
 
@@ -19,6 +20,7 @@ from es_data_client import es_data_client
 from main_page_data_service import main_page_data_service
 from negative_news_alerts_service import negative_news_alerts_service
 from account_news_reports_service import account_news_reports_service
+from action_item_service import action_item_service
 
 # Simple logging status management
 LOG_MCP_COMMUNICATIONS = os.getenv("LOG_MCP_COMMUNICATIONS", "false").lower() == "true"
@@ -370,10 +372,14 @@ async def get_all_news():
 async def get_all_reports():
     """Get all reports for the reports list page"""
     try:
+        logger.info("🔍 Backend: Starting to fetch all reports from ES")
         reports = await es_data_client.get_all_reports()
+        logger.info(f"🔍 Backend: Found {len(reports)} reports")
+        if len(reports) > 0:
+            logger.info(f"🔍 Backend: Sample report fields: {list(reports[0].keys()) if reports else 'No reports'}")
         return {"reports": reports}
     except Exception as e:
-        logger.error(f"Error fetching all reports: {e}")
+        logger.error(f"❌ Backend: Error fetching all reports: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching reports")
 
 @app.get("/alerts/negative-news")
@@ -397,6 +403,28 @@ async def get_negative_news_alerts(time_period: int = 48, time_unit: str = "hour
     except Exception as e:
         logger.error(f"Error fetching negative news alerts: {e}")
         raise HTTPException(status_code=500, detail="Error fetching negative news alerts")
+
+@app.get("/action-item")
+async def get_action_item(time_period: int = 48, time_unit: str = "hours"):
+    """Get action item analysis for top accounts with negative news"""
+    try:
+        # Validate time_unit
+        valid_units = ["minutes", "hours", "days"]
+        if time_unit not in valid_units:
+            raise HTTPException(status_code=400, detail=f"Invalid time_unit. Must be one of: {valid_units}")
+        
+        # Validate time_period
+        if time_period <= 0:
+            raise HTTPException(status_code=400, detail="time_period must be greater than 0")
+        
+        logger.info(f"Getting action item analysis for {time_period} {time_unit}")
+        action_item = await action_item_service.get_action_item_analysis(time_period, time_unit)
+        return action_item
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching action item analysis: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching action item analysis")
 
 async def article_summarization_generator(article_content: str, symbol: str = "", account_id: str = ""):
     """
@@ -644,12 +672,20 @@ async def chat_stream_generator(prompt: str, session_id: Optional[str] = None):
                 messages.append(tool_message)
                 conversation_manager.add_message(session_id, tool_message)
 
-        # Show tool results to user
+        # Show tool results to user in structured format
         if tool_results:
-            yield f"\n\n--- Tool Results (Turn {turn}) ---\n"
-            for tr in tool_results:
-                yield f"**{tr['tool_name']}**: {tr['result']}\n"
-            yield "\n"
+            tool_results_data = {
+                "turn": turn,
+                "tool_results": [
+                    {
+                        "tool_name": tr["tool_name"],
+                        "result": tr["result"],
+                        "timestamp": time.time()
+                    }
+                    for tr in tool_results
+                ]
+            }
+            yield f"\n\n```json-tool-results\n{json.dumps(tool_results_data, indent=2)}\n```\n\n"
 
 @app.post("/chat/query")
 async def chat_query(query: Dict[str, str]):

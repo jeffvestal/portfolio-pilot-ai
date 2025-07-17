@@ -231,23 +231,26 @@ class ESDataClient:
     async def get_all_reports(self) -> List[Dict[str, Any]]:
         """Get all reports for the reports list page"""
         try:
+            logger.info("🔍 ES Client: Searching financial_reports index")
             response = await self.client.search(
                 index="financial_reports",
                 body={
                     "query": {"match_all": {}}, 
                     "size": 1000,
-                    "sort": [{"published_date": {"order": "desc"}}]
+                    "sort": [{"report_date": {"order": "desc"}}]
                 }
             )
+            logger.info(f"🔍 ES Client: Query response - total hits: {response['hits']['total']['value'] if 'hits' in response and 'total' in response['hits'] else 'unknown'}")
+            logger.info(f"🔍 ES Client: Returned {len(response['hits']['hits']) if 'hits' in response else 0} documents")
             
             return [
                 {
                     "id": hit["_id"],
                     "title": hit["_source"].get("title", "No title"),
-                    "symbol": hit["_source"].get("symbol", ""),
-                    "published_date": hit["_source"].get("published_date", ""),
-                    "summary": hit["_source"].get("summary", "")[:200] + "..." if hit["_source"].get("summary", "") else "No summary available",
-                    "source": hit["_source"].get("source", ""),
+                    "symbol": hit["_source"].get("primary_symbol", hit["_source"].get("company_symbol", "")),
+                    "published_date": hit["_source"].get("report_date", ""),
+                    "summary": hit["_source"].get("content", "")[:200] + "..." if hit["_source"].get("content", "") else "No summary available",
+                    "source": hit["_source"].get("author", ""),
                     "url": hit["_source"].get("url", ""),
                     "document_id": hit["_id"],
                     "index": "financial_reports"
@@ -256,7 +259,7 @@ class ESDataClient:
             ]
             
         except Exception as e:
-            logger.error(f"Error fetching all reports: {e}")
+            logger.error(f"❌ ES Client: Error fetching all reports: {e}", exc_info=True)
             return []
     
     async def get_position_details(self, account_id: str, symbol: str) -> Optional[Dict[str, Any]]:
