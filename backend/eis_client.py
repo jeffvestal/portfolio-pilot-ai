@@ -4,7 +4,6 @@ import aiohttp
 import asyncio
 import traceback
 from dotenv import load_dotenv
-from tool_definitions import get_tools
 
 load_dotenv()
 
