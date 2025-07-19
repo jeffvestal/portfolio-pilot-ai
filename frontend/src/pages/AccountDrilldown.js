@@ -5,6 +5,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useMCPNotification } from '../contexts/MCPNotificationContext';
+import EmailDraftPopup from '../components/EmailDraftPopup';
 import axios from 'axios';
 
 const modalStyle = {
@@ -28,7 +29,9 @@ const AccountDrilldown = () => {
   const { showMCPTool, hideMCPTool } = useMCPNotification();
   const [account, setAccount] = useState(null);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [email, setEmail] = useState({ subject: '', body: '' });
+  const [emailData, setEmailData] = useState(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState(null);
   const [articleModalOpen, setArticleModalOpen] = useState(false);
   const [articleContent, setArticleContent] = useState('');
   const [newsReports, setNewsReports] = useState(null);
@@ -69,16 +72,61 @@ const AccountDrilldown = () => {
     }
   }, [accountId]); // Removed showMCPTool, hideMCPTool from dependencies as they're stable
 
-  const handleEmailModalOpen = async (articleId) => {
-    const response = await axios.post('http://localhost:8000/email/draft', {
-      account_id: accountId,
-      article_id: articleId
-    });
-    setEmail(response.data);
+  const handleEmailModalOpen = async () => {
     setEmailModalOpen(true);
+    setEmailLoading(true);
+    setEmailError(null);
+    setEmailData(null);
+    
+    const notificationId = showMCPTool('Email Generation', 'Analyzing account holdings and market developments for personalized email');
+    
+    try {
+      const response = await axios.post('http://localhost:8000/email/draft', {
+        account_id: accountId,
+        time_period: 48,
+        time_unit: 'hours'
+      });
+      setEmailData(response.data);
+    } catch (error) {
+      console.error('Error generating email:', error);
+      
+      let errorMessage = 'Failed to generate email. Please try again.';
+      if (error.response?.data) {
+        // Handle different error response formats
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.detail) {
+          errorMessage = typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : 'Invalid response format';
+        } else if (error.response.data.message) {
+          errorMessage = typeof error.response.data.message === 'string'
+            ? error.response.data.message
+            : 'Invalid response format';
+        } else {
+          // Handle validation errors or other complex objects safely
+          try {
+            errorMessage = `Server error: ${JSON.stringify(error.response.data)}`;
+          } catch {
+            errorMessage = 'Server returned an invalid error response';
+          }
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setEmailError(errorMessage);
+    } finally {
+      setEmailLoading(false);
+      hideMCPTool(notificationId);
+    }
   };
 
-  const handleEmailModalClose = () => setEmailModalOpen(false);
+  const handleEmailModalClose = () => {
+    setEmailModalOpen(false);
+    setEmailData(null);
+    setEmailError(null);
+  };
 
   const handleArticleOpen = async (articleId, type) => {
     try {
@@ -233,7 +281,7 @@ const AccountDrilldown = () => {
         <Typography variant="subtitle1">{account.state} - {account.type} - {account.risk_profile}</Typography>
       </Grid>
       <Grid item xs={12}>
-        <Button variant="contained" onClick={() => handleEmailModalOpen(account.relevant_news.articles[0].id)}>Draft Email</Button>
+        <Button variant="contained" onClick={handleEmailModalOpen}>Draft Email</Button>
       </Grid>
       <Grid item xs={12} md={6}>
         <Card>
@@ -455,17 +503,13 @@ const AccountDrilldown = () => {
           </CardContent>
         </Card>
       </Grid>
-      <Modal
+      <EmailDraftPopup
         open={emailModalOpen}
         onClose={handleEmailModalClose}
-      >
-        <Box sx={modalStyle}>
-          <Typography variant="h6">Draft Email</Typography>
-          <TextField fullWidth label="Subject" value={email.subject} sx={{ mt: 2 }} />
-          <TextField fullWidth multiline rows={10} label="Body" value={email.body} sx={{ mt: 2 }} />
-          <Button onClick={handleEmailModalClose} sx={{ mt: 2 }}>Close</Button>
-        </Box>
-      </Modal>
+        emailData={emailData}
+        loading={emailLoading}
+        error={emailError}
+      />
 
       <Modal
         open={articleModalOpen}

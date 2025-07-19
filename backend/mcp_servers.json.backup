@@ -1,0 +1,282 @@
+{
+  "created_at": 1752091905.988878,
+  "servers": {
+    "new-server-1752768724874": {
+      "api_key": "VjJDYTVaY0JxOVM3M2tfUkxrV2w6azExUG1SZXZ4WTkxd25hY1JaUExCZw==",
+      "connection_status": "disconnected",
+      "conversation_field": null,
+      "conversation_location": "response",
+      "enabled": true,
+      "id": "new-server-1752768724874",
+      "last_connected": 1752777739.982434,
+      "name": "ES MCP Server",
+      "tools": {
+        "esql_symbol_news_and_reports": {
+          "description": "Find news and reports for a symbol.",
+          "enabled": true,
+          "name": "esql_symbol_news_and_reports",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "symbol": {
+                "description": "The asset symbol",
+                "type": "string"
+              }
+            },
+            "required": [
+              "symbol"
+            ],
+            "type": "object"
+          }
+        },
+        "execute_esql": {
+          "description": "Execute an ES|QL query and return the results.",
+          "enabled": true,
+          "name": "execute_esql",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "query": {
+                "description": "The ES|QL query to execute",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          }
+        },
+        "generate_esql": {
+          "description": "Generate an ES|QL query from a natural language query.",
+          "enabled": true,
+          "name": "generate_esql",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "context": {
+                "description": "(optional) Additional context that could be useful to generate the ES|QL query",
+                "type": "string"
+              },
+              "index": {
+                "description": "(optional) Index to search against. If not provided, will use the index explorer to find the best index to use.",
+                "type": "string"
+              },
+              "query": {
+                "description": "The query to generate an ES|QL query from.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          }
+        },
+        "get_document_by_id": {
+          "description": "Retrieve the full content (source) of a document based on its ID and index name.",
+          "enabled": true,
+          "name": "get_document_by_id",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "ID of the document to retrieve",
+                "type": "string"
+              },
+              "index": {
+                "description": "Name of the index to retrieve the document from",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "index"
+            ],
+            "type": "object"
+          }
+        },
+        "get_index_mapping": {
+          "description": "Retrieve mappings for the specified index or indices.",
+          "enabled": true,
+          "name": "get_index_mapping",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "indices": {
+                "description": "List of indices to retrieve mappings for.",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              }
+            },
+            "required": [
+              "indices"
+            ],
+            "type": "object"
+          }
+        },
+        "index_explorer": {
+          "description": "List relevant indices and corresponding mappings based on a natural language query.\n\n                  The 'indexPattern' parameter can be used to filter indices by a specific pattern, e.g. 'foo*'.\n                  This should *only* be used if you know what you're doing (e.g. if the user explicitly specified a pattern).\n                  Otherwise, leave it empty to list all indices.\n\n                  *Example:*\n                  User: \"Show me my latest alerts\"\n                  You: call tool 'indexExplorer' with { query: 'indices containing alerts' }\n                  Tool result: [{ indexName: '.alerts', mappings: {...} }]\n                  ",
+          "enabled": true,
+          "name": "index_explorer",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "indexPattern": {
+                "description": "(optional) Index pattern to filter indices by. Defaults to *.",
+                "type": "string"
+              },
+              "limit": {
+                "description": "(optional) Limit the max number of indices to return. Defaults to 1.",
+                "type": "number"
+              },
+              "query": {
+                "description": "A natural language query to infer which indices to use.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          }
+        },
+        "list_indices": {
+          "description": "List the indices in the Elasticsearch cluster the current user has access to.",
+          "enabled": true,
+          "name": "list_indices",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "pattern": {
+                "description": "(optional) pattern to filter indices by. Defaults to *. Leave empty to list all indices (recommended)",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "neg_news_reports_with_pos": {
+          "description": "Find accounts that have a position in a negative sentiment news or report in the specified timeframe.",
+          "enabled": true,
+          "name": "neg_news_reports_with_pos",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "time_duration": {
+                "description": "The timeframe to search back. Format is \"X hours|minutes|days\" eg. \"7 hours\" ",
+                "type": "string"
+              }
+            },
+            "required": [
+              "time_duration"
+            ],
+            "type": "object"
+          }
+        },
+        "news_and_report_lookup_with_symbol_detail": {
+          "description": "Find News and Reports about a specific Symbol. Includes detail about the Symbol.",
+          "enabled": true,
+          "name": "news_and_report_lookup_with_symbol_detail",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "symbol": {
+                "description": "The financial symbol to look up. eg \"ESTC\" ",
+                "type": "string"
+              },
+              "time_duration": {
+                "description": "The timeframe to search back. Format is \"X hours|minutes|days\" eg. \"7 hours\" ",
+                "type": "string"
+              }
+            },
+            "required": [
+              "time_duration",
+              "symbol"
+            ],
+            "type": "object"
+          }
+        },
+        "nl_search": {
+          "description": "Run a DSL search query on one index and return matching documents.",
+          "enabled": true,
+          "name": "nl_search",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "context": {
+                "description": "(optional) Additional context that could be useful to perform the search",
+                "type": "string"
+              },
+              "index": {
+                "description": "(optional) Index to search against. If not provided, will use the index explorer to find the best index to use.",
+                "type": "string"
+              },
+              "query": {
+                "description": "A natural language query expressing the search request",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          }
+        },
+        "relevance_search": {
+          "description": "Find relevant documents in an index based on a simple fulltext search.\n\n    - The 'index' parameter can be used to specify which index to search against. If not provided, the tool will use the index explorer to find the best index to use.\n    - The 'fields' parameter can be used to specify which fields to search on. If not provided, the tool will use all searchable fields.\n\n    It is perfectly fine not to not specify both 'index' and 'fields'. Those should only be used when you already know about the index and fields you want to search on,\n    e.g if the user explicitly specified them.",
+          "enabled": true,
+          "name": "relevance_search",
+          "parameters": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+              "fields": {
+                "description": "(optional) Fields to perform fulltext search on. If not provided, will use all searchable fields.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "index": {
+                "description": "(optional) Index to search against. If not provided, will use index explorer to find the best index to use.",
+                "type": "string"
+              },
+              "size": {
+                "default": 10,
+                "description": "Number of documents to return. Defaults to 10.",
+                "type": "number"
+              },
+              "term": {
+                "description": "Term to search for",
+                "type": "string"
+              }
+            },
+            "required": [
+              "term"
+            ],
+            "type": "object"
+          }
+        }
+      },
+      "transport": "http",
+      "url": "http://localhost:5601/api/mcp",
+      "use_for_main_page": true
+    }
+  },
+  "updated_at": 1752777740.0052428,
+  "version": "1.0"
+}

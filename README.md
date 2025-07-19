@@ -64,6 +64,159 @@ This application demonstrates a **hybrid architecture** that leverages both dire
 - **Alert System** - MCP-powered negative news monitoring with position analysis
 - **AI Analysis** - Streaming LLM integration for personalized content summarization
 
+## Synthetic Data Generation Tools
+
+The `tools/` directory contains Python scripts for generating synthetic financial data to populate your Elasticsearch cluster. These tools create realistic test data including accounts, holdings, news articles, and research reports for demonstration purposes.
+
+### 📁 Tools Directory Structure
+
+#### Core Scripts
+- **`generate_holdings_accounts.py`** - Creates synthetic financial accounts with portfolio holdings and asset details
+- **`generate_reports_and_news.py`** - Generates financial news articles and research reports using AI
+- **`trigger_bad_news_event.py`** - Creates controlled negative events for testing alert systems
+
+#### Shared Modules (Consolidated Architecture)
+- **`symbols_config.py`** - Central symbol definitions for stocks, ETFs, and bonds
+- **`config.py`** - Shared configuration constants and environment settings
+- **`common_utils.py`** - Shared utility functions for API calls, ES ingestion, and data processing
+- **`symbol_manager.py`** - Advanced symbol management and filtering utilities
+
+#### Templates & Data
+- **`*.txt`** - AI prompt templates for content generation
+- **`*.jsonl`** - Generated data files ready for Elasticsearch ingestion
+
+### 🔧 Configuration & Setup
+
+**Environment Variables Required:**
+```bash
+# Elasticsearch Configuration
+ES_ENDPOINT_URL=https://localhost:9200
+ES_API_KEY=your_elasticsearch_api_key
+
+# Gemini AI Configuration (for content generation)
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+**Key Configuration Files:**
+- **`tools/config.py`** - Centralized settings for all data generation
+  - ES indices and connection settings
+  - Generation parameters (number of accounts, articles, etc.)
+  - File paths and API configurations
+  - Content themes and sentiment options
+
+### 📊 Data Generation Workflow
+
+#### 1. Generate Core Financial Data
+```bash
+cd tools
+python generate_holdings_accounts.py
+```
+**Creates:**
+- 7,000 synthetic financial accounts
+- 70,000-175,000 portfolio holdings (10-25 per account)
+- 100+ unique asset details (stocks, ETFs, bonds)
+- Data files: `generated_accounts.jsonl`, `generated_holdings.jsonl`, `generated_asset_details.jsonl`
+
+#### 2. Generate News & Reports
+```bash
+python generate_reports_and_news.py
+```
+**Creates:**
+- 50+ specific company news articles
+- 500+ general market news articles  
+- 20+ specific company reports
+- 100+ thematic industry reports
+- Data files: `generated_news.jsonl`, `generated_reports.jsonl`
+
+#### 3. Trigger Controlled Events (Optional)
+```bash
+python trigger_bad_news_event.py
+```
+**Creates controlled negative events for testing:**
+- 5 specific news articles (1 negative for TSLA)
+- 4 general market articles
+- 2 specific reports (1 negative for FCX)
+- 1 thematic report
+- Data files: `generated_controlled_news.jsonl`, `generated_controlled_reports.jsonl`
+
+### 🎯 Centralized Symbol Management
+
+**Single Source of Truth:** All scripts now share symbol definitions from `symbols_config.py`
+
+**Symbol Categories:**
+- **Stocks:** 100+ major US stocks (NASDAQ 100, S&P 500, DJIA)
+- **ETFs:** 30+ sector and international ETFs
+- **Bonds:** 35+ government and corporate bonds
+
+**Easy Updates:** Change symbols in one file to affect all scripts
+```python
+# Example: Adding a new stock symbol
+STOCK_SYMBOLS_AND_INFO = {
+    'NVDA': {'name': 'NVIDIA Corp.', 'sector': 'Technology', 'indices': ['NASDAQ 100', 'S&P 500']},
+    # Add your new symbol here
+}
+```
+
+### 🔄 Data Ingestion Control
+
+Each script includes control flags for selective generation and ingestion:
+
+```python
+# Control what gets generated/ingested
+DO_GENERATE_DATA = True     # Generate new data files
+DO_INGEST_TO_ES = True      # Upload to Elasticsearch
+```
+
+### 🛠 Advanced Features
+
+#### Symbol Manager
+```python
+from symbol_manager import SymbolManager
+
+sm = SymbolManager()
+tech_stocks = sm.get_symbols_by_sector('Technology')
+random_etfs = sm.get_random_etfs(10)
+sp500_symbols = sm.get_symbols_by_index('S&P 500')
+```
+
+#### Configurable Data Generation
+- **Account settings:** Risk profiles, contact preferences, geographic distribution
+- **Content generation:** Sentiment distribution, event themes, market scenarios
+- **Technical settings:** Batch sizes, API delays, validation rules
+
+#### Error Handling & Validation
+- Environment variable validation
+- File existence checks
+- JSON validation and error recovery
+- Rate limiting for external APIs
+
+### 📈 Generated Data Statistics
+
+**Typical Output:**
+- **7,000 accounts** with realistic personal and financial details
+- **~120,000 holdings** across diverse asset classes
+- **~150 unique assets** with current and historical pricing
+- **550+ news articles** with sentiment analysis
+- **120+ research reports** across companies and sectors
+- **Full Elasticsearch compatibility** with proper indexing
+
+### 🔧 Maintenance & Updates
+
+**Benefits of Consolidated Architecture:**
+- ✅ **No code duplication** - Eliminated 2,250+ lines of duplicate code
+- ✅ **Easy symbol updates** - Change once, update everywhere
+- ✅ **Consistent configuration** - Centralized settings management
+- ✅ **Shared utilities** - Common functions for all scripts
+- ✅ **Better maintainability** - Bug fixes and improvements apply globally
+
+**Making Changes:**
+1. **Add new symbols** → Edit `symbols_config.py`
+2. **Adjust generation settings** → Modify `config.py`
+3. **Update utility functions** → Enhance `common_utils.py`
+4. **Add symbol filtering** → Extend `symbol_manager.py`
+
+All scripts will automatically use your updates without modification.
+
 ## Prerequisites
 
 - **Python 3.10+**

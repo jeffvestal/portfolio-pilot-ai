@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from otel_config import setup_telemetry
 from eis_client import get_chat_response_stream, get_chat_response_stream_with_messages
@@ -21,6 +22,7 @@ from main_page_data_service import main_page_data_service
 from negative_news_alerts_service import negative_news_alerts_service
 from account_news_reports_service import account_news_reports_service
 from action_item_service import action_item_service
+from email_generation_service import email_generation_service
 
 # Simple logging status management
 LOG_MCP_COMMUNICATIONS = os.getenv("LOG_MCP_COMMUNICATIONS", "false").lower() == "true"
@@ -40,6 +42,12 @@ load_dotenv()
 # --- Logging Setup ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("main_logger")
+
+# Pydantic models
+class EmailDraftRequest(BaseModel):
+    account_id: str
+    time_period: Optional[int] = 48
+    time_unit: Optional[str] = "hours"
 
 app = FastAPI(
     title="Portfolio-Pilot-AI",
@@ -216,37 +224,43 @@ async def start_day():
         raise HTTPException(status_code=500, detail="Error starting daily analysis")
 
 @app.post("/email/draft")
-async def draft_email(request: Dict[str, str]):
-    """Draft an email for client communication"""
+async def draft_email(request: EmailDraftRequest):
+    """Draft a contextual email for client communication"""
     try:
-        account_id = request.get("account_id")
-        article_id = request.get("article_id")
+        logger.info(f"Email draft request received: account_id={request.account_id}, time_period={request.time_period}, time_unit={request.time_unit}")
         
-        # Get account info
-        account_data = await es_data_client.get_account_details(account_id)
-        if not account_data:
-            raise HTTPException(status_code=404, detail="Account not found")
+        # Validate time period
+        if request.time_period <= 0:
+            raise HTTPException(status_code=400, detail="Time period must be positive")
+            
+        # Validate time unit
+        if request.time_unit not in ["minutes", "hours", "days"]:
+            raise HTTPException(status_code=400, detail="Time unit must be 'minutes', 'hours', or 'days'")
         
-        # Generate a simple email draft
-        subject = f"Market Update for {account_data['account_name']}"
-        body = f"""Dear {account_data['account_name']},
-
-I hope this message finds you well. I wanted to reach out with a brief update on your portfolio and some relevant market developments.
-
-Your current portfolio value stands at ${account_data['total_portfolio_value']:,.2f}, and I've been monitoring several factors that may impact your holdings.
-
-Recent market developments include news related to your current positions. I recommend we schedule a brief call to discuss these developments and any potential adjustments to your investment strategy.
-
-Please let me know your availability for a 15-minute call this week.
-
-Best regards,
-Your Financial Advisor"""
-
-        return {"subject": subject, "body": body}
+        logger.info(f"Generating email for account {request.account_id} with {request.time_period} {request.time_unit}")
         
+        # Use the email generation service
+        email_data = await email_generation_service.generate_account_email(
+            request.account_id, request.time_period, request.time_unit
+        )
+        
+        # Ensure we return valid email data
+        if not isinstance(email_data, dict) or "subject" not in email_data or "body" not in email_data:
+            logger.error(f"Invalid email data returned: {email_data}")
+            raise ValueError("Invalid email data generated")
+        
+        return email_data
+        
+    except ValueError as e:
+        error_msg = str(e)
+        logger.error(f"Validation error: {error_msg}")
+        if "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        else:
+            raise HTTPException(status_code=400, detail=error_msg)
     except Exception as e:
-        logger.error(f"Error drafting email: {e}")
-        raise HTTPException(status_code=500, detail="Error drafting email")
+        logger.error(f"Error drafting email: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error drafting email. Please try again.")
 
 @app.get("/article/{article_id}")
 async def get_article_content(article_id: str):
