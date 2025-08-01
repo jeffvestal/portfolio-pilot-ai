@@ -231,6 +231,88 @@ def get_gemini_generation_config():
         'response_mime_type': GEMINI_CONFIG['response_mime_type']
     }
 
+# --- Demo Market Simulation Settings ---
+DEMO_CONFIG = {
+    'update_interval_seconds': 30,
+    'auto_start': True,
+    'initial_news_count': 3,
+    
+    # Price Movement Settings
+    'base_volatility': 0.08,  # 8% base daily volatility for demo-friendly swings
+    'correlation_strength': 0.3,  # Sector correlation factor
+    'price_bounds': {
+        'max_daily_change': 0.30,  # ±30% maximum daily change
+        'min_price': 1.0,  # Minimum price floor
+        'circuit_breaker': 0.20  # Halt trading if >20% move in 30 seconds
+    },
+    
+    # Market Modes
+    'volatility_modes': {
+        'calm': {'multiplier': 0.5, 'event_frequency': 0.1},      # 50% volatility, rare events
+        'active': {'multiplier': 1.0, 'event_frequency': 0.3},     # Normal volatility, regular events  
+        'extreme': {'multiplier': 2.0, 'event_frequency': 0.6}     # 200% volatility, frequent events
+    },
+    'default_mode': 'active',
+    
+    # News Generation Settings
+    'news_triggers': {
+        'major_threshold': 0.05,    # ±5% triggers major news
+        'minor_threshold': 0.02,    # ±2% triggers minor news  
+        'sector_threshold': 0.03,   # ±3% for multiple stocks triggers sector news
+        'cooldown_minutes': 10,     # Min time between news for same symbol
+        'max_daily_articles': 5     # Max articles per symbol per day
+    },
+    
+    # Event System
+    'auto_events': {
+        'enabled': True,
+        'base_frequency_per_hour': 8,  # 8 events per hour on average
+        'event_types': {
+            'single_stock': 0.4,    # 40% single company events
+            'sector_wide': 0.3,     # 30% sector events  
+            'market_wide': 0.2,     # 20% market events
+            'volatility_spike': 0.1 # 10% volatility events
+        }
+    },
+    
+    # Preset Events
+    'preset_events': {
+        'market_crash': {
+            'price_impact': -0.15,  # -15% across all stocks
+            'volatility_multiplier': 3.0,
+            'duration_minutes': 30,
+            'news_count': 10
+        },
+        'tech_boom': {
+            'sector': 'Technology',
+            'price_impact': 0.10,   # +10% for tech stocks
+            'volatility_multiplier': 2.0,
+            'duration_minutes': 15,
+            'news_count': 5
+        },
+        'volatility_spike': {
+            'volatility_multiplier': 4.0,
+            'duration_minutes': 20,
+            'news_count': 3
+        }
+    },
+    
+    # Market Bias Settings
+    'market_bias': {
+        'bull': 0.02,     # +2% daily drift
+        'neutral': 0.0,   # No drift
+        'bear': -0.02     # -2% daily drift
+    },
+    'default_bias': 'neutral',
+    
+    # WebSocket Settings
+    'websocket': {
+        'broadcast_interval': 5,  # Broadcast updates every 5 seconds
+        'max_connections': 50,
+        'heartbeat_interval': 30
+    }
+}
+
 # --- Debug and Logging Settings ---
 DEBUG_SETTINGS = {
     'log_level': 'INFO',
